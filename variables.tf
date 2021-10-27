@@ -3,7 +3,7 @@ variable "region" {
   type        = string
 }
 variable "transit_firenet" {
- description = "Enable Transit Firenet"
+  description = "Enable Transit Firenet"
   default     = true
   type        = string
 }
@@ -202,21 +202,21 @@ variable "bootstrap_bucket_name" {
 
 
 locals {
-  is_palo       = length(regexall("palo", lower(var.firewall_image))) > 0  #Check if fw image contains palo. Needs special handling for management_subnet (CP & Fortigate null)
-  lower_name = length(var.name) > 0 ? replace(lower(var.name), " ", "-") : replace(lower(var.region), " ", "-")
-  prefix     = var.prefix ? "avx-" : ""
-  suffix     = var.suffix ? "-transit" : ""
-  name       = "${local.prefix}${local.lower_name}${local.suffix}"
-  cidrbits                 = tonumber(split("/", var.transit_cidr)[1])
-  newbits                  = 26 - local.cidrbits
-  netnum                   = pow(2, local.newbits)
-  lan_subnet_cidr     = cidrsubnet(var.firewall_cidr, local.newbits, local.netnum -4)
-  egress_subnet_cidr     = cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 2)
-  mgmt_subnet_cidr    = cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 3)
-  transit_subnet  = aviatrix_vpc.default.subnets[0].cidr
-  mgmt_subnet     =  aviatrix_vpc.management_vpc.subnets[0].cidr
-  lan_subnet     = aviatrix_vpc.lan_vpc.subnets[0].cidr
-  egress_subnet     =  aviatrix_vpc.egress_vpc.subnets[0].cidr
-  region1    = "${var.region}-${var.az1}"
-  region2    = "${var.region}-${var.az2}"
+  is_palo            = length(regexall("palo", lower(var.firewall_image))) > 0 #Check if fw image contains palo. Needs special handling for management_subnet (CP & Fortigate null)
+  lower_name         = length(var.name) > 0 ? replace(lower(var.name), " ", "-") : replace(lower(var.region), " ", "-")
+  prefix             = var.prefix ? "avx-" : ""
+  suffix             = var.suffix ? "-transit" : ""
+  name               = "${local.prefix}${local.lower_name}${local.suffix}"
+  cidrbits           = tonumber(split("/", var.transit_cidr)[1])
+  newbits            = 26 - local.cidrbits
+  netnum             = pow(2, local.newbits)
+  lan_subnet_cidr    = cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 4)
+  egress_subnet_cidr = cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 2)
+  mgmt_subnet_cidr   = cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 3)
+  transit_subnet     = aviatrix_vpc.default.subnets[0].cidr
+  mgmt_subnet        = aviatrix_vpc.management_vpc.subnets[0].cidr
+  lan_subnet         = aviatrix_vpc.lan_vpc.subnets[0].cidr
+  egress_subnet      = aviatrix_vpc.egress_vpc.subnets[0].cidr
+  region1            = "${var.region}-${var.az1}"
+  region2            = "${var.region}-${var.az2}"
 }

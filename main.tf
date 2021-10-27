@@ -87,7 +87,7 @@ resource "aviatrix_transit_gateway" "default" {
   connected_transit                = var.connected_transit
   bgp_manual_spoke_advertise_cidrs = var.bgp_manual_spoke_advertise_cidrs
   enable_learned_cidrs_approval    = var.learned_cidr_approval
-  enable_transit_firenet            = var.transit_firenet
+  enable_transit_firenet           = var.transit_firenet
   enable_segmentation              = var.enable_segmentation
   single_az_ha                     = var.single_az_ha
   single_ip_snat                   = var.single_ip_snat
@@ -111,8 +111,8 @@ resource "aviatrix_firewall_instance" "firewall_instance" {
   firenet_gw_name        = aviatrix_transit_gateway.default.gw_name
   management_subnet      = local.is_palo ? format("%s~~%s~~%s", aviatrix_vpc.management_vpc.subnets[0].cidr, aviatrix_vpc.management_vpc.subnets[0].region, aviatrix_vpc.management_vpc.subnets[0].name) : null
   management_vpc_id      = local.is_palo ? aviatrix_vpc.management_vpc.vpc_id : null
-  egress_vpc_id =  aviatrix_vpc.egress_vpc.vpc_id
-  bootstrap_bucket_name = var.bootstrap_bucket_name
+  egress_vpc_id          = aviatrix_vpc.egress_vpc.vpc_id
+  bootstrap_bucket_name  = var.bootstrap_bucket_name
   zone                   = local.region1
 }
 
@@ -140,13 +140,13 @@ resource "aviatrix_firewall_instance" "firewall_instance_2" {
   firewall_size          = var.fw_instance_size
   vpc_id                 = format("%s~-~%s", aviatrix_transit_gateway.default.vpc_id, data.aviatrix_account.account_id.gcloud_project_id)
   firewall_image         = var.firewall_image
-  firewall_image_version = var.firewall_image_version                
+  firewall_image_version = var.firewall_image_version
   egress_subnet          = format("%s~~%s~~%s", aviatrix_vpc.egress_vpc.subnets[0].cidr, aviatrix_vpc.egress_vpc.subnets[0].region, aviatrix_vpc.egress_vpc.subnets[0].name)
   firenet_gw_name        = aviatrix_transit_gateway.default.gw_name
   management_subnet      = local.is_palo ? format("%s~~%s~~%s", aviatrix_vpc.management_vpc.subnets[0].cidr, aviatrix_vpc.management_vpc.subnets[0].region, aviatrix_vpc.management_vpc.subnets[0].name) : null
   management_vpc_id      = local.is_palo ? aviatrix_vpc.management_vpc.vpc_id : null
-  egress_vpc_id = aviatrix_vpc.egress_vpc.vpc_id
-  bootstrap_bucket_name = var.bootstrap_bucket_name
+  egress_vpc_id          = aviatrix_vpc.egress_vpc.vpc_id
+  bootstrap_bucket_name  = var.bootstrap_bucket_name
   zone                   = var.ha_gw ? local.region2 : null
 }
 
