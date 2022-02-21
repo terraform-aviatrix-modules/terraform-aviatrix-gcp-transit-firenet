@@ -56,7 +56,7 @@ module "transit_firenet_1" {
   transit_cidr            = "10.0.0.0/24" 
   firewall_cidr           = "10.0.1.0/26"
   region                  = "europe-west1"
-  firewall_image          = "Fortinet FortiGate (BYOL) Next-Generation Firewall"
+  firewall_image          = "Fortinet FortiGate Next-Generation Firewall (BYOL)"
   firewall_image_version  = "6.4.5"
 }
 ```
@@ -77,7 +77,7 @@ Firewall images
 ```
 Palo Alto Networks VM-Series Next-Generation Firewall BYOL
 Check Point CloudGuard IaaS Firewall & Threat Prevention (Gateway only) (BYOL)
-Fortinet FortiGate (BYOL) Next-Generation Firewall
+FortiGate Next-Generation Firewall (BYOL)
 ```
 
 Firewall image versions tested
