@@ -156,6 +156,7 @@ resource "aviatrix_firenet" "firenet" {
   inspection_enabled                   = var.inspection_enabled
   egress_enabled                       = false
   manage_firewall_instance_association = false
+  east_west_inspection_excluded_cidrs  = var.east_west_inspection_excluded_cidrs
   depends_on                           = [aviatrix_firewall_instance_association.firenet_instance, aviatrix_firewall_instance_association.firenet_instance1, aviatrix_firewall_instance_association.firenet_instance2]
 }
 
