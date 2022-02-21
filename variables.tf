@@ -115,6 +115,12 @@ variable "learned_cidr_approval" {
   default     = "false"
 }
 
+variable "east_west_inspection_excluded_cidrs" {
+  description = "Network List Excluded From East-West Inspection."
+  type        = list(string)
+  default     = null
+}
+
 variable "active_mesh" {
   description = "Set to false to disable active mesh."
   type        = bool
