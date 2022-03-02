@@ -201,8 +201,14 @@ variable "bgp_cidrs" {
   default     = null
 }
 
+variable "deploy_firenet" {
+  description = "Set to false to fully deploy the Transit Firenet, but without the actual NGFW instances."
+  type        = bool
+  default     = true
+}
+
 locals {
-  is_palo            = var.firewall_image != null ? length(regexall("palo", lower(var.firewall_image))) > 0 : null #Check if fw image contains palo. Needs special handling for management_subnet (CP & Fortigate null)
+  is_palo            = var.deploy_firenet ? length(regexall("palo", lower(var.firewall_image))) > 0 : null #Check if fw image contains palo. Needs special handling for management_subnet (CP & Fortigate null)
   lower_name         = length(var.name) > 0 ? replace(lower(var.name), " ", "-") : replace(lower(var.region), " ", "-")
   prefix             = var.prefix ? "avx-" : ""
   suffix             = var.suffix ? "-transit" : ""
@@ -210,9 +216,9 @@ locals {
   cidrbits           = tonumber(split("/", var.transit_cidr)[1])
   newbits            = 26 - local.cidrbits
   netnum             = pow(2, local.newbits)
-  lan_subnet_cidr    = var.firewall_image != "" ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 4) : null
-  egress_subnet_cidr = var.firewall_image != "" ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 2) : null
-  mgmt_subnet_cidr   = var.firewall_image != "" ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 3) : null
+  lan_subnet_cidr    = var.deploy_firenet ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 4) : null
+  egress_subnet_cidr = var.deploy_firenet ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 2) : null
+  mgmt_subnet_cidr   = var.deploy_firenet ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 3) : null
   transit_subnet     = aviatrix_vpc.default.subnets[0].cidr
   # mgmt_subnet        = aviatrix_vpc.management_vpc[0].subnets[0].cidr
   # lan_subnet         = aviatrix_vpc.lan_vpc[0].subnets[0].cidr
@@ -220,7 +226,6 @@ locals {
   region1                = "${var.region}-${var.az1}"
   region2                = "${var.region}-${var.az2}"
   hpe                    = var.hpe || var.bgp_cidrs != null ? true : false
-  firenet_enabled        = var.firewall_image != "" ? true : false
-  firewall_image         = var.firewall_image != "" ? element(split("~", var.firewall_image), 0) : null
-  firewall_image_version = var.firewall_image != "" ? element(split("~", var.firewall_image), 1) : null
+  firewall_image         = var.deploy_firenet ? element(split("~", var.firewall_image), 0) : null
+  firewall_image_version = var.deploy_firenet ? element(split("~", var.firewall_image), 1) : null
 }

@@ -28,7 +28,7 @@ resource "aviatrix_vpc" "default" {
 
 # Management VPC
 resource "aviatrix_vpc" "management_vpc" {
-  count                = local.firenet_enabled ? local.is_palo ? 1 : 0 : 0
+  count                = var.deploy_firenet ? local.is_palo ? 1 : 0 : 0
   cloud_type           = 4
   account_name         = var.account
   name                 = "${local.name}-mgmt"
@@ -44,7 +44,7 @@ resource "aviatrix_vpc" "management_vpc" {
 
 # LAN VPC 
 resource "aviatrix_vpc" "lan_vpc" {
-  count                = local.firenet_enabled ? 1 : 0
+  count                = var.deploy_firenet ? 1 : 0
   cloud_type           = 4
   account_name         = var.account
   name                 = "${local.name}-lan"
@@ -60,7 +60,7 @@ resource "aviatrix_vpc" "lan_vpc" {
 
 # Egress VPC
 resource "aviatrix_vpc" "egress_vpc" {
-  count                = local.firenet_enabled ? 1 : 0
+  count                = var.deploy_firenet ? 1 : 0
   cloud_type           = 4
   account_name         = var.account
   name                 = "${local.name}-egress"
@@ -119,12 +119,12 @@ resource "aviatrix_transit_gateway" "default" {
   connected_transit                = var.connected_transit
   bgp_manual_spoke_advertise_cidrs = var.bgp_manual_spoke_advertise_cidrs
   enable_learned_cidrs_approval    = var.learned_cidr_approval
-  enable_transit_firenet           = local.firenet_enabled ? true : false
+  enable_transit_firenet           = var.deploy_firenet ? true : false
   enable_segmentation              = var.enable_segmentation
   single_az_ha                     = var.single_az_ha
   single_ip_snat                   = var.single_ip_snat
-  lan_vpc_id                       = local.firenet_enabled ? aviatrix_vpc.lan_vpc[0].name : null
-  lan_private_subnet               = local.firenet_enabled ? aviatrix_vpc.lan_vpc[0].subnets[0].cidr : null
+  lan_vpc_id                       = var.deploy_firenet ? aviatrix_vpc.lan_vpc[0].name : null
+  lan_private_subnet               = var.deploy_firenet ? aviatrix_vpc.lan_vpc[0].subnets[0].cidr : null
   enable_advertise_transit_cidr    = var.enable_advertise_transit_cidr
   bgp_polling_time                 = var.bgp_polling_time
   bgp_ecmp                         = var.bgp_ecmp
@@ -151,7 +151,7 @@ resource "aviatrix_transit_gateway" "default" {
 
 # Firewall instances 
 resource "aviatrix_firewall_instance" "firewall_instance" {
-  count                  = local.firenet_enabled ? var.ha_gw ? 0 : 1 : 0
+  count                  = var.deploy_firenet ? var.ha_gw ? 0 : 1 : 0
   firewall_name          = "${local.name}-fw"
   firewall_size          = var.fw_instance_size
   vpc_id                 = format("%s~-~%s", aviatrix_transit_gateway.default.vpc_id, data.aviatrix_account.account_id.gcloud_project_id)
@@ -169,7 +169,7 @@ resource "aviatrix_firewall_instance" "firewall_instance" {
 
 
 resource "aviatrix_firewall_instance" "firewall_instance_1" {
-  count                  = local.firenet_enabled ? var.ha_gw ? 1 : 0 : 0
+  count                  = var.deploy_firenet ? var.ha_gw ? 1 : 0 : 0
   firewall_name          = "${local.name}-fw1"
   firewall_size          = var.fw_instance_size
   vpc_id                 = format("%s~-~%s", aviatrix_transit_gateway.default.vpc_id, data.aviatrix_account.account_id.gcloud_project_id)
@@ -185,7 +185,7 @@ resource "aviatrix_firewall_instance" "firewall_instance_1" {
 }
 
 resource "aviatrix_firewall_instance" "firewall_instance_2" {
-  count                  = local.firenet_enabled ? var.ha_gw ? 1 : 0 : 0
+  count                  = var.deploy_firenet ? var.ha_gw ? 1 : 0 : 0
   firewall_name          = "${local.name}-fw2"
   firewall_size          = var.fw_instance_size
   vpc_id                 = format("%s~-~%s", aviatrix_transit_gateway.default.vpc_id, data.aviatrix_account.account_id.gcloud_project_id)
@@ -202,7 +202,7 @@ resource "aviatrix_firewall_instance" "firewall_instance_2" {
 
 # Firenet
 resource "aviatrix_firenet" "firenet" {
-  count                                = local.firenet_enabled ? 1 : 0
+  count                                = var.deploy_firenet ? 1 : 0
   vpc_id                               = format("%s~-~%s", aviatrix_transit_gateway.default.vpc_id, data.aviatrix_account.account_id.gcloud_project_id)
   inspection_enabled                   = var.inspection_enabled
   egress_enabled                       = false
@@ -224,7 +224,7 @@ resource "aviatrix_firewall_instance_association" "firenet_instance" {
 }
 
 resource "aviatrix_firewall_instance_association" "firenet_instance1" {
-  count                = local.firenet_enabled ? var.ha_gw ? 1 : 0 : 0
+  count                = var.deploy_firenet ? var.ha_gw ? 1 : 0 : 0
   vpc_id               = aviatrix_firewall_instance.firewall_instance_1[0].vpc_id
   firenet_gw_name      = aviatrix_transit_gateway.default.gw_name
   instance_id          = aviatrix_firewall_instance.firewall_instance_1[0].instance_id
@@ -235,7 +235,7 @@ resource "aviatrix_firewall_instance_association" "firenet_instance1" {
 }
 
 resource "aviatrix_firewall_instance_association" "firenet_instance2" {
-  count                = local.firenet_enabled ? var.ha_gw ? 1 : 0 : 0
+  count                = var.deploy_firenet ? var.ha_gw ? 1 : 0 : 0
   vpc_id               = aviatrix_firewall_instance.firewall_instance_2[0].vpc_id
   firenet_gw_name      = aviatrix_transit_gateway.default.gw_name
   instance_id          = aviatrix_firewall_instance.firewall_instance_2[0].instance_id
