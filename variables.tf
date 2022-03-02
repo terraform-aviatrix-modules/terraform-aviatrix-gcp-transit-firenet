@@ -2,11 +2,6 @@ variable "region" {
   description = "Primary GCP region where subnet and Aviatrix Transit Gateway will be created"
   type        = string
 }
-variable "transit_firenet" {
-  description = "Enable Transit Firenet"
-  default     = true
-  type        = string
-}
 
 variable "account" {
   description = "Name of the GCP Access Account defined in the Aviatrix Controller"
@@ -33,33 +28,33 @@ variable "fw_instance_size" {
 }
 
 variable "transit_cidr" {
-  description = "CIDR of the primary GCP subnet"
+  description = "CIDR of the GCP transit subnet"
   type        = string
 }
 
 variable "firewall_cidr" {
-  description = "CIDR of the HA GCP subnet"
+  description = "CIDR to derive Firenet CIDR ranges"
   type        = string
   default     = ""
 }
 
-variable "egress_subnet_cidr" {
-  description = "CIDR of the HA GCP subnet"
-  type        = string
-  default     = ""
-}
+# variable "egress_subnet_cidr" {
+#   description = "CIDR of the HA GCP subnet"
+#   type        = string
+#   default     = ""
+# }
 
-variable "lan_subnet_cidr" {
-  description = "CIDR of the HA GCP subnet"
-  type        = string
-  default     = ""
-}
+# variable "lan_subnet_cidr" {
+#   description = "CIDR of the HA GCP subnet"
+#   type        = string
+#   default     = ""
+# }
 
-variable "mgmt_subnet_cidr" {
-  description = "CIDR of the HA GCP subnet"
-  type        = string
-  default     = ""
-}
+# variable "mgmt_subnet_cidr" {
+#   description = "CIDR of the HA GCP subnet"
+#   type        = string
+#   default     = ""
+# }
 
 variable "ha_gw" {
   description = "Set to false te deploy a single transit GW"
@@ -80,7 +75,7 @@ variable "az2" {
 }
 
 variable "name" {
-  description = "Name for this spoke VPC and it's gateways"
+  description = "Name for this transit VPC and it's gateways"
   type        = string
   default     = ""
 }
@@ -121,13 +116,7 @@ variable "east_west_inspection_excluded_cidrs" {
   default     = null
 }
 
-variable "active_mesh" {
-  description = "Set to false to disable active mesh."
-  type        = bool
-  default     = true
-}
-
-variable "insane_mode" {
+variable "hpe" {
   description = "Boolean to enable insane mode"
   type        = bool
   default     = false
@@ -171,15 +160,15 @@ variable "bgp_ecmp" {
 
 
 variable "firewall_image" {
-  description = "The firewall image to be used to deploy the NGFW's"
+  description = "The firewall image to be used to deploy the NGFW's. If not specified, firewalls are not deployed"
   type        = string
-}
+  default     = ""
 
-variable "firewall_image_version" {
-  description = "The firewall image version specific to the NGFW vendor image"
-  type        = string
+  validation {
+    condition = length(split("~",var.firewall_image)) == 2 || var.firewall_image == ""
+    error_message = "The image must be specified as <firewall image name>~<version>. To disable Firenet, do not specify the variable." 
+  }
 }
-
 
 variable "egress_enabled" {
   description = "Set to true to enable egress inspection on the firewall instances"
@@ -206,9 +195,14 @@ variable "bootstrap_bucket_name" {
   default     = null
 }
 
+variable "bgp_cidrs" {
+  description = "CIDRs for BGP over LAN VPCs. If the GW and HAGW need to be in separate VPCs, then specify both CIDRs like 10.0.0.0/28~10.0.0.16/28."
+  type        = list(string)
+  default     = null  
+}
 
 locals {
-  is_palo            = length(regexall("palo", lower(var.firewall_image))) > 0 #Check if fw image contains palo. Needs special handling for management_subnet (CP & Fortigate null)
+  is_palo            = var.firewall_image != null ? length(regexall("palo", lower(var.firewall_image))) > 0 : null #Check if fw image contains palo. Needs special handling for management_subnet (CP & Fortigate null)
   lower_name         = length(var.name) > 0 ? replace(lower(var.name), " ", "-") : replace(lower(var.region), " ", "-")
   prefix             = var.prefix ? "avx-" : ""
   suffix             = var.suffix ? "-transit" : ""
@@ -216,13 +210,17 @@ locals {
   cidrbits           = tonumber(split("/", var.transit_cidr)[1])
   newbits            = 26 - local.cidrbits
   netnum             = pow(2, local.newbits)
-  lan_subnet_cidr    = cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 4)
-  egress_subnet_cidr = cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 2)
-  mgmt_subnet_cidr   = cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 3)
+  lan_subnet_cidr    = var.firewall_image != "" ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 4) : null
+  egress_subnet_cidr = var.firewall_image != "" ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 2) : null
+  mgmt_subnet_cidr   = var.firewall_image != "" ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 3) : null
   transit_subnet     = aviatrix_vpc.default.subnets[0].cidr
-  mgmt_subnet        = aviatrix_vpc.management_vpc.subnets[0].cidr
-  lan_subnet         = aviatrix_vpc.lan_vpc.subnets[0].cidr
-  egress_subnet      = aviatrix_vpc.egress_vpc.subnets[0].cidr
+  # mgmt_subnet        = aviatrix_vpc.management_vpc[0].subnets[0].cidr
+  # lan_subnet         = aviatrix_vpc.lan_vpc[0].subnets[0].cidr
+  # egress_subnet      = aviatrix_vpc.egress_vpc[0].subnets[0].cidr
   region1            = "${var.region}-${var.az1}"
   region2            = "${var.region}-${var.az2}"
+  hpe                = var.hpe || var.bgp_cidrs != null ? true : false
+  firenet_enabled    = var.firewall_image != "" ? true : false
+  firewall_image     = var.firewall_image != "" ? element(split("~",var.firewall_image),0) : null
+  firewall_image_version = var.firewall_image != "" ?element(split("~",var.firewall_image),1) : null
 }
