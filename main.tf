@@ -75,7 +75,7 @@ resource "aviatrix_vpc" "egress_vpc" {
 
 # BGP over LAN VPCs
 resource "aviatrix_vpc" "bgp_cidrs" {
-  for_each             = { for cidr in var.bgp_cidrs : "bgp-${index(var.bgp_cidrs, cidr)+1}" => element(split("~",cidr),0) }
+  for_each             = { for cidr in var.bgp_cidrs : "bgp-${index(var.bgp_cidrs, cidr) + 1}" => element(split("~", cidr), 0) }
   cloud_type           = 4
   account_name         = var.account
   name                 = "${local.name}-${each.key}"
@@ -90,7 +90,7 @@ resource "aviatrix_vpc" "bgp_cidrs" {
 
 # BGP over LAN HA VPCs
 resource "aviatrix_vpc" "bgp_ha_vpc" {
-  for_each             = { for cidr in var.bgp_cidrs : "bgp-ha-${index(var.bgp_cidrs, cidr)+1}" => element(split("~",cidr),1) if length(split("~",cidr)) == 2}
+  for_each             = { for cidr in var.bgp_cidrs : "bgp-ha-${index(var.bgp_cidrs, cidr) + 1}" => element(split("~", cidr), 1) if length(split("~", cidr)) == 2 }
   cloud_type           = 4
   account_name         = var.account
   name                 = "${local.name}-${each.key}"
@@ -130,9 +130,9 @@ resource "aviatrix_transit_gateway" "default" {
   bgp_ecmp                         = var.bgp_ecmp
   enable_bgp_over_lan              = var.bgp_cidrs != null ? true : false
 
-#GCP BGP interfaces
+  #GCP BGP interfaces
   dynamic "bgp_lan_interfaces" {
-    for_each = { for cidr in var.bgp_cidrs : "bgp-${index(var.bgp_cidrs, cidr)+1}" => element(split("~",cidr),0) }
+    for_each = { for cidr in var.bgp_cidrs : "bgp-${index(var.bgp_cidrs, cidr) + 1}" => element(split("~", cidr), 0) }
     content {
       vpc_id = "${local.name}-${bgp_lan_interfaces.key}"
       subnet = bgp_lan_interfaces.value
@@ -140,7 +140,7 @@ resource "aviatrix_transit_gateway" "default" {
   }
 
   dynamic "ha_bgp_lan_interfaces" {
-    for_each = { for cidr in var.bgp_cidrs : length(split("~",cidr)) == 2 ? "bgp-ha-${index(var.bgp_cidrs, cidr)+1}" : "bgp-${index(var.bgp_cidrs, cidr)+1}" => length(split("~",cidr)) == 2 ? element(split("~",cidr),1) : cidr }
+    for_each = { for cidr in var.bgp_cidrs : length(split("~", cidr)) == 2 ? "bgp-ha-${index(var.bgp_cidrs, cidr) + 1}" : "bgp-${index(var.bgp_cidrs, cidr) + 1}" => length(split("~", cidr)) == 2 ? element(split("~", cidr), 1) : cidr }
     content {
       vpc_id = "${local.name}-${ha_bgp_lan_interfaces.key}"
       subnet = ha_bgp_lan_interfaces.value

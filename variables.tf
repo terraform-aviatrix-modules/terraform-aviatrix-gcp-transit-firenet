@@ -165,8 +165,8 @@ variable "firewall_image" {
   default     = ""
 
   validation {
-    condition = length(split("~",var.firewall_image)) == 2 || var.firewall_image == ""
-    error_message = "The image must be specified as <firewall image name>~<version>. To disable Firenet, do not specify the variable." 
+    condition     = length(split("~", var.firewall_image)) == 2 || var.firewall_image == ""
+    error_message = "The image must be specified as <firewall image name>~<version>. To disable Firenet, do not specify the variable."
   }
 }
 
@@ -198,7 +198,7 @@ variable "bootstrap_bucket_name" {
 variable "bgp_cidrs" {
   description = "CIDRs for BGP over LAN VPCs. If the GW and HAGW need to be in separate VPCs, then specify both CIDRs like 10.0.0.0/28~10.0.0.16/28."
   type        = list(string)
-  default     = null  
+  default     = null
 }
 
 locals {
@@ -217,10 +217,10 @@ locals {
   # mgmt_subnet        = aviatrix_vpc.management_vpc[0].subnets[0].cidr
   # lan_subnet         = aviatrix_vpc.lan_vpc[0].subnets[0].cidr
   # egress_subnet      = aviatrix_vpc.egress_vpc[0].subnets[0].cidr
-  region1            = "${var.region}-${var.az1}"
-  region2            = "${var.region}-${var.az2}"
-  hpe                = var.hpe || var.bgp_cidrs != null ? true : false
-  firenet_enabled    = var.firewall_image != "" ? true : false
-  firewall_image     = var.firewall_image != "" ? element(split("~",var.firewall_image),0) : null
-  firewall_image_version = var.firewall_image != "" ?element(split("~",var.firewall_image),1) : null
+  region1                = "${var.region}-${var.az1}"
+  region2                = "${var.region}-${var.az2}"
+  hpe                    = var.hpe || var.bgp_cidrs != null ? true : false
+  firenet_enabled        = var.firewall_image != "" ? true : false
+  firewall_image         = var.firewall_image != "" ? element(split("~", var.firewall_image), 0) : null
+  firewall_image_version = var.firewall_image != "" ? element(split("~", var.firewall_image), 1) : null
 }
