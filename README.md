@@ -6,6 +6,7 @@ This module deploys 4 VPCs (Transit Firenet, Management, Egress and LAN), Aviatr
 ### Compatibility
 Module version | Terraform version | Controller version | Terraform provider version
 :--- | :--- | :--- | :---
+v1.1.0 | >=1.0 | >=6.6.5404 | 2.21.1-6.6.ga
 v1.0.0 | 0.12 - 1.0 | >=6.5 | >=0.2.20
 
 **_Information on older releases can be found in respective release notes._*
@@ -91,42 +92,42 @@ The following variables are optional:
 
 key | default | value
 :--- | :--- | :---
-instance_size | n1-standard-1 | Size of the transit gateway instances. **Insane mode requires a minimum n1-highcpu-4 instance size**
-fw_instance_size | n1-standard-4 | Size of the firewall instances
 attached | true | Attach firewall instances to Aviatrix Gateways
-ha_gw | true | Set to false to deploy single Aviatrix gateway. When set to false, fw_amount is ignored and only a single NGFW instance is deployed.
-insane_mode | false | Set to true to enable Aviatrix insane mode high-performance encryption
-name | null | When this string is set, user defined name is applied to all infrastructure supporting n+1 sets within a same region or other customization
-egress_enabled | false | Set to true to enable egress inspection on the firewall instances
-inspection_enabled | true | Set to false to disable inspection on the firewall instances
-connected_transit | true | Set to false to disable connected_transit
-bgp_manual_spoke_advertise_cidrs | | Intended CIDR list to advertise via BGP. Example: "10.2.0.0/16,10.4.0.0/16"
-learned_cidr_approval | false | Switch to true to enable learned CIDR approval
-active_mesh | true | Set to false to disable active_mesh
-prefix | true | Boolean to enable prefix name with avx-
-suffix | true | Boolean to enable suffix name with -transit
-enable_segmentation | false | Switch to true to enable transit segmentation
-insane_instance_size | n1-highcpu-4 | Instance size used when insane mode is enabled.
-enable_egress_transit_firenet | false | Switch to true to enable egress on the transit firenet.
-single_az_ha | true | Set to false if Controller managed Gateway HA is desired
-single_ip_snat | false | Enable single_ip mode Source NAT for this container
-enable_advertise_transit_cidr  | false | Switch to enable/disable advertise transit VPC network CIDR for a VGW connection
-bgp_polling_time  | 50 | BGP route polling time. Unit is in seconds
-bgp_ecmp  | false | Enable Equal Cost Multi Path (ECMP) routing for the next hop
-bootstrap_bucket_name | null | Storagename to get bootstrap files from (PANW only)
-local_as_number | | Changes the Aviatrix Transit Gateway ASN number before you setup Aviatrix Transit Gateway connection configurations.
-enable_bgp_over_lan | false | Enable BGp over LAN. Creates eth4 for integration with SDWAN for example
-enable_egress_transit_firenet | false | Set to true to enable egress on transit gw
 az1 | c | AZ Zone to be used for Transit GW + NGFW deployment.
 az2 | b | AZ Zone to be used for HA Transit GW + HA NGFW deployment.
-tunnel_detection_time | null | The IPsec tunnel down detection time for the Spoke Gateway in seconds. Must be a number in the range [20-600]. Default is 60.
-tags | null | Map of tags to assign to the gateway.
-enable_multi_tier_transit |	false |	Switch to enable multi tier transit
-egress_static_cidrs | [] | List of egress static CIDRs. Egress is required to be enabled. Example: ["1.171.15.184/32", "1.171.15.185/32"].
-firewall_image_id | | Custom Firewall image ID.
-learned_cidrs_approval_mode | | Learned cidrs approval mode. Defaults to Gateway. Valid values: gateway, connection
-fail_close_enabled | | Set to true to enable fail close
+bgp_ecmp  | false | Enable Equal Cost Multi Path (ECMP) routing for the next hop
+bgp_manual_spoke_advertise_cidrs | | Intended CIDR list to advertise via BGP. Example: "10.2.0.0/16,10.4.0.0/16"
+bgp_polling_time  | 50 | BGP route polling time. Unit is in seconds
+bootstrap_bucket_name | null | Storagename to get bootstrap files from (PANW only)
+connected_transit | true | Set to false to disable connected_transit
+deploy_firenet | true | Set to false to only deploy the Transit, but without the actual NGFW instances and Firenet settings (e.g. if you want to deploy that later or manually).
 east_west_inspection_excluded_cidrs | | Network List Excluded From East-West Inspection.
+egress_enabled | false | Set to true to enable egress inspection on the firewall instances
+egress_static_cidrs | [] | List of egress static CIDRs. Egress is required to be enabled. Example: ["1.171.15.184/32", "1.171.15.185/32"].
+enable_advertise_transit_cidr  | false | Switch to enable/disable advertise transit VPC network CIDR for a VGW connection
+enable_bgp_over_lan | false | Enable BGp over LAN. Creates eth4 for integration with SDWAN for example
+enable_egress_transit_firenet | false | Set to true to enable egress on transit gw
+enable_egress_transit_firenet | false | Switch to true to enable egress on the transit firenet.
+enable_multi_tier_transit |	false |	Switch to enable multi tier transit
+enable_segmentation | false | Switch to true to enable transit segmentation
+fail_close_enabled | | Set to true to enable fail close
+firewall_image_id | | Custom Firewall image ID.
+fw_instance_size | n1-standard-4 | Size of the firewall instances
+ha_gw | true | Set to false to deploy single Aviatrix gateway. When set to false, fw_amount is ignored and only a single NGFW instance is deployed.
+insane_instance_size | n1-highcpu-4 | Instance size used when insane mode is enabled.
+insane_mode | false | Set to true to enable Aviatrix insane mode high-performance encryption
+inspection_enabled | true | Set to false to disable inspection on the firewall instances
+instance_size | n1-standard-1 | Size of the transit gateway instances. **Insane mode requires a minimum n1-highcpu-4 instance size**
+learned_cidr_approval | false | Switch to true to enable learned CIDR approval
+learned_cidrs_approval_mode | | Learned cidrs approval mode. Defaults to Gateway. Valid values: gateway, connection
+local_as_number | | Changes the Aviatrix Transit Gateway ASN number before you setup Aviatrix Transit Gateway connection configurations.
+name | null | When this string is set, user defined name is applied to all infrastructure supporting n+1 sets within a same region or other customization
+prefix | true | Boolean to enable prefix name with avx-
+single_az_ha | true | Set to false if Controller managed Gateway HA is desired
+single_ip_snat | false | Enable single_ip mode Source NAT for this container
+suffix | true | Boolean to enable suffix name with -transit
+tags | null | Map of tags to assign to the gateway.
+tunnel_detection_time | null | The IPsec tunnel down detection time for the Spoke Gateway in seconds. Must be a number in the range [20-600]. Default is 60.
 
 ### Outputs
 This module will return the following objects:
