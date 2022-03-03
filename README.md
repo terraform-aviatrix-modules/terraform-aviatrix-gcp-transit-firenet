@@ -23,7 +23,7 @@ Examples shown below are specific to each vendor.
 ```
 module "gcp_ha_transit_1" {
   source                  = "terraform-aviatrix-modules/gcp-transit-firenet/aviatrix"
-  version                 = "1.0.0"
+  version                 = "1.1.0"
   account                 = "GCP"
   transit_cidr            = "10.0.0.0/24" 
   firewall_cidr           = "10.0.1.0/26"
@@ -37,7 +37,7 @@ module "gcp_ha_transit_1" {
 ```
 module "transit_firenet_1" {
   source                  = "terraform-aviatrix-modules/gcp-transit-firenet/aviatrix"
-  version                 = "1.0.0"
+  version                 = "1.1.0"
   account                 = "GCP"
   transit_cidr            = "10.0.0.0/24" 
   firewall_cidr           = "10.0.1.0/26"
@@ -52,7 +52,7 @@ module "transit_firenet_1" {
 ```
 module "transit_firenet_1" {
   source                  = "terraform-aviatrix-modules/gcp-transit-firenet/aviatrix"
-  version                 = "1.0.0"
+  version                 = "1.1.0"
   account                 = "GCP"
   transit_cidr            = "10.0.0.0/24" 
   firewall_cidr           = "10.0.1.0/26"
