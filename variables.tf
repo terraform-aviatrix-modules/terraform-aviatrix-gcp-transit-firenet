@@ -32,29 +32,17 @@ variable "transit_cidr" {
   type        = string
 }
 
+variable "transit_vpc_name" {
+  description = "Name of Transit VPC."
+  type        = string
+  default     = ""
+}
+
 variable "firewall_cidr" {
   description = "CIDR to derive Firenet CIDR ranges"
   type        = string
   default     = ""
 }
-
-# variable "egress_subnet_cidr" {
-#   description = "CIDR of the HA GCP subnet"
-#   type        = string
-#   default     = ""
-# }
-
-# variable "lan_subnet_cidr" {
-#   description = "CIDR of the HA GCP subnet"
-#   type        = string
-#   default     = ""
-# }
-
-# variable "mgmt_subnet_cidr" {
-#   description = "CIDR of the HA GCP subnet"
-#   type        = string
-#   default     = ""
-# }
 
 variable "ha_gw" {
   description = "Set to false te deploy a single transit GW"
@@ -158,7 +146,6 @@ variable "bgp_ecmp" {
   default     = false
 }
 
-
 variable "firewall_image" {
   description = "The firewall image to be used to deploy the NGFW's. If not specified, firewalls are not deployed"
   type        = string
@@ -201,6 +188,36 @@ variable "bgp_cidrs" {
   default     = null
 }
 
+variable "bgp_names" {
+  description = "Names of BGP over LAN VPCs. If the GW and HAGW need to be in separate VPCs, then specify both names like vpc-a~vpc-b. This list must correspond exactly with variable bgp_cidrs. This is required for using existing VPCs."
+  type        = list(string)
+  default     = null
+}
+
+variable "bgp_use_existing_vpcs" {
+  description = "Create VPCs for BGP?"
+  type        = bool
+  default     = false
+}
+
+variable "transit_use_existing_vpcs" {
+  description = "Create VPCs for Transit?"
+  type        = bool
+  default     = false
+}
+
+# variable "firenet_use_existing_vpcs" {
+#    description = "Create VPCs for firenet?"
+#    type        = bool
+#    default     = false
+#  }
+
+variable "bgp_asn" {
+  description = "BGP ASN for Transit Gateway"
+  type        = number
+  default     = 0
+}
+
 variable "deploy_firenet" {
   description = "Set to false to fully deploy the Transit Firenet, but without the actual NGFW instances."
   type        = bool
@@ -208,24 +225,25 @@ variable "deploy_firenet" {
 }
 
 locals {
-  is_palo            = var.deploy_firenet ? length(regexall("palo", lower(var.firewall_image))) > 0 : null #Check if fw image contains palo. Needs special handling for management_subnet (CP & Fortigate null)
-  lower_name         = length(var.name) > 0 ? replace(lower(var.name), " ", "-") : replace(lower(var.region), " ", "-")
-  prefix             = var.prefix ? "avx-" : ""
-  suffix             = var.suffix ? "-transit" : ""
-  name               = "${local.prefix}${local.lower_name}${local.suffix}"
-  cidrbits           = tonumber(split("/", var.transit_cidr)[1])
-  newbits            = 26 - local.cidrbits
-  netnum             = pow(2, local.newbits)
-  lan_subnet_cidr    = var.deploy_firenet ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 4) : null
-  egress_subnet_cidr = var.deploy_firenet ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 2) : null
-  mgmt_subnet_cidr   = var.deploy_firenet ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 3) : null
-  transit_subnet     = aviatrix_vpc.default.subnets[0].cidr
-  # mgmt_subnet        = aviatrix_vpc.management_vpc[0].subnets[0].cidr
-  # lan_subnet         = aviatrix_vpc.lan_vpc[0].subnets[0].cidr
-  # egress_subnet      = aviatrix_vpc.egress_vpc[0].subnets[0].cidr
+  is_palo                = var.deploy_firenet ? length(regexall("palo", lower(var.firewall_image))) > 0 : null #Check if fw image contains palo. Needs special handling for management_subnet (CP & Fortigate null)
+  lower_name             = length(var.name) > 0 ? replace(lower(var.name), " ", "-") : replace(lower(var.region), " ", "-")
+  prefix                 = var.prefix ? "avx-" : ""
+  suffix                 = var.suffix ? "-transit" : ""
+  name                   = "${local.prefix}${local.lower_name}${local.suffix}"
+  cidrbits               = tonumber(split("/", var.transit_cidr)[1])
+  newbits                = 26 - local.cidrbits
+  netnum                 = pow(2, local.newbits)
+  lan_subnet_cidr        = var.deploy_firenet ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 4) : null
+  egress_subnet_cidr     = var.deploy_firenet ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 2) : null
+  mgmt_subnet_cidr       = var.deploy_firenet ? cidrsubnet(var.firewall_cidr, local.newbits, local.netnum - 3) : null
   region1                = "${var.region}-${var.az1}"
   region2                = "${var.region}-${var.az2}"
   hpe                    = var.hpe || var.bgp_cidrs != null ? true : false
   firewall_image         = var.deploy_firenet ? element(split("~", var.firewall_image), 0) : null
   firewall_image_version = var.deploy_firenet ? element(split("~", var.firewall_image), 1) : null
+  transit_vpc_name       = var.transit_vpc_name != "" ? var.transit_vpc_name : local.name
+  bgp_cidrs              = [for cidr in var.bgp_cidrs : length(split("~", cidr)) == 1 ? "${cidr}~${cidr}" : cidr] #Double up to simplfy logic.
+  bgp_names              = [for name in var.bgp_names : length(split("~", name)) == 1 ? "${name}~${name}" : name] #Double up to simplfy logic.
+  bgp_vpcs               = var.bgp_names != null ? zipmap([for name in var.bgp_names : element(split("~", name), 0)], [for cidr in var.bgp_cidrs : element(split("~", cidr), 0)]) : zipmap([for cidr in var.bgp_cidrs : "bgp-${index(var.bgp_cidrs, cidr) + 1}"], [for cidr in var.bgp_cidrs : element(split("~", cidr), 0)])
+  ha_bgp_vpcs            = var.bgp_names != null ? zipmap([for name in var.bgp_names : element(split("~", name), 1)], [for cidr in var.bgp_cidrs : element(split("~", cidr), 1)]) : zipmap([for cidr in var.bgp_cidrs : "bgp-${index(var.bgp_cidrs, cidr) + 1}"], [for cidr in var.bgp_cidrs : element(split("~", cidr), 1)])
 }
