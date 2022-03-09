@@ -1,7 +1,7 @@
 # Aviatrix Transit Firenet for GCP
 
 ### Description
-This module deploys 4 VPCs (Transit Firenet, Management, Egress and LAN), Aviatrix transit gateways (HA), and firewall instances.
+In the default state, this module deploys 4 VPCs (Transit Firenet, Management, Egress and LAN), Aviatrix transit gateways (HA), and firewall instances. Optionally, it can deploy only Transit and/or add BGPoverLAN interfaces and VPCs. Existing BGP and Transit VPCs can be reused.
 
 ### Compatibility
 Module version | Terraform version | Controller version | Terraform provider version
@@ -95,9 +95,13 @@ key | default | value
 attached | true | Attach firewall instances to Aviatrix Gateways
 az1 | c | AZ Zone to be used for Transit GW + NGFW deployment.
 az2 | b | AZ Zone to be used for HA Transit GW + HA NGFW deployment.
+bgp_asn | | BGP ASN for Transit Gateway
+bgp_cidrs | | CIDRs for BGP over LAN VPCs. If the GW and HAGW need to be in separate VPCs, then specify both CIDRs like 10.0.0.0/28~10.0.0.16/28.
 bgp_ecmp  | false | Enable Equal Cost Multi Path (ECMP) routing for the next hop
 bgp_manual_spoke_advertise_cidrs | | Intended CIDR list to advertise via BGP. Example: "10.2.0.0/16,10.4.0.0/16"
+bgp_names | | Names of BGP over LAN VPCs. If the GW and HAGW need to be in separate VPCs, then specify both names like vpc-a~vpc-b. This list must correspond exactly with variable bgp_cidrs. This is required for using existing VPCs.
 bgp_polling_time  | 50 | BGP route polling time. Unit is in seconds
+bgp_use_existing_vpcs | | Use existing VPCs for BGP over LAN?
 bootstrap_bucket_name | null | Storagename to get bootstrap files from (PANW only)
 connected_transit | true | Set to false to disable connected_transit
 deploy_firenet | true | Set to false to only deploy the Transit, but without the actual NGFW instances and Firenet settings (e.g. if you want to deploy that later or manually).
@@ -127,6 +131,8 @@ single_az_ha | true | Set to false if Controller managed Gateway HA is desired
 single_ip_snat | false | Enable single_ip mode Source NAT for this container
 suffix | true | Boolean to enable suffix name with -transit
 tags | null | Map of tags to assign to the gateway.
+transit_use_existing_vpcs | | Use existing VPC for Transit Gateway
+transit_vpc_name | | Name of the Transit VPC. If not specified, the name will be generated automatically.
 tunnel_detection_time | null | The IPsec tunnel down detection time for the Spoke Gateway in seconds. Must be a number in the range [20-600]. Default is 60.
 
 ### Outputs
