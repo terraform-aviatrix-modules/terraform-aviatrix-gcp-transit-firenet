@@ -12,14 +12,15 @@ data "aviatrix_account" "account_id" {
 
 # Transit VPC
 resource "aviatrix_vpc" "default" {
+  count                = var.transit_use_existing_vpcs ? 0 : 1
   cloud_type           = 4
   account_name         = var.account
-  name                 = local.name
+  name                 = local.transit_vpc_name
   aviatrix_transit_vpc = false
   aviatrix_firenet_vpc = false
 
   subnets {
-    name   = local.name
+    name   = local.transit_vpc_name
     cidr   = var.transit_cidr
     region = var.region
   }
@@ -75,7 +76,7 @@ resource "aviatrix_vpc" "egress_vpc" {
 
 # BGP over LAN VPCs
 resource "aviatrix_vpc" "bgp_cidrs" {
-  for_each             = { for cidr in var.bgp_cidrs : "bgp-${index(var.bgp_cidrs, cidr) + 1}" => element(split("~", cidr), 0) }
+  for_each             = { for k, v in local.bgp_vpcs : k => v if var.bgp_use_existing_vpcs == false }
   cloud_type           = 4
   account_name         = var.account
   name                 = "${local.name}-${each.key}"
@@ -90,7 +91,7 @@ resource "aviatrix_vpc" "bgp_cidrs" {
 
 # BGP over LAN HA VPCs
 resource "aviatrix_vpc" "bgp_ha_vpc" {
-  for_each             = { for cidr in var.bgp_cidrs : "bgp-ha-${index(var.bgp_cidrs, cidr) + 1}" => element(split("~", cidr), 1) if length(split("~", cidr)) == 2 }
+  for_each             = { for k, v in local.ha_bgp_vpcs : k => v if var.bgp_use_existing_vpcs == false && contains(local.bgp_cidrs, k) == k } # Creates if the non-HA subnet is different.
   cloud_type           = 4
   account_name         = var.account
   name                 = "${local.name}-${each.key}"
@@ -106,14 +107,14 @@ resource "aviatrix_vpc" "bgp_ha_vpc" {
 # Aviatrix Transit GW
 resource "aviatrix_transit_gateway" "default" {
   gw_name                          = local.name
-  vpc_id                           = aviatrix_vpc.default.name
+  vpc_id                           = local.transit_vpc_name
   cloud_type                       = 4
   vpc_reg                          = local.region1
   gw_size                          = local.hpe ? var.insane_instance_size : var.instance_size
   account_name                     = var.account
-  subnet                           = local.transit_subnet
+  subnet                           = var.transit_cidr
   insane_mode                      = local.hpe
-  ha_subnet                        = var.ha_gw ? local.transit_subnet : null
+  ha_subnet                        = var.ha_gw ? var.transit_cidr : null
   ha_gw_size                       = var.ha_gw ? (local.hpe ? var.insane_instance_size : var.instance_size) : null
   ha_zone                          = var.ha_gw ? local.region2 : null
   connected_transit                = var.connected_transit
@@ -129,20 +130,21 @@ resource "aviatrix_transit_gateway" "default" {
   bgp_polling_time                 = var.bgp_polling_time
   bgp_ecmp                         = var.bgp_ecmp
   enable_bgp_over_lan              = var.bgp_cidrs != null ? true : false
+  local_as_number                  = var.bgp_asn != 0 ? var.bgp_asn : null
 
   #GCP BGP interfaces
   dynamic "bgp_lan_interfaces" {
-    for_each = { for cidr in var.bgp_cidrs : "bgp-${index(var.bgp_cidrs, cidr) + 1}" => element(split("~", cidr), 0) }
+    for_each = { for k, v in local.bgp_vpcs : k => v }
     content {
-      vpc_id = "${local.name}-${bgp_lan_interfaces.key}"
+      vpc_id = bgp_lan_interfaces.key
       subnet = bgp_lan_interfaces.value
     }
   }
 
   dynamic "ha_bgp_lan_interfaces" {
-    for_each = { for cidr in var.bgp_cidrs : length(split("~", cidr)) == 2 ? "bgp-ha-${index(var.bgp_cidrs, cidr) + 1}" : "bgp-${index(var.bgp_cidrs, cidr) + 1}" => length(split("~", cidr)) == 2 ? element(split("~", cidr), 1) : cidr }
+    for_each = { for k, v in local.ha_bgp_vpcs : k => v }
     content {
-      vpc_id = "${local.name}-${ha_bgp_lan_interfaces.key}"
+      vpc_id = ha_bgp_lan_interfaces.key
       subnet = ha_bgp_lan_interfaces.value
     }
   }
