@@ -1,7 +1,7 @@
 # Aviatrix Transit Firenet for GCP
 
 ### Description
-This module deploys 4 VPCs (Transit Firenet, Management, Egress and LAN), Aviatrix transit gateways (HA), and firewall instances.
+In the default state, this module deploys 4 VPCs (Transit Firenet, Management, Egress and LAN), Aviatrix transit gateways (HA), and firewall instances. Optionally, it can deploy only Transit and/or add BGPoverLAN interfaces and VPCs. Existing BGP and Transit VPCs can be reused.
 
 ### Compatibility
 Module version | Terraform version | Controller version | Terraform provider version
@@ -127,6 +127,13 @@ firewall_image_id | | Custom Firewall image ID.
 learned_cidrs_approval_mode | | Learned cidrs approval mode. Defaults to Gateway. Valid values: gateway, connection
 fail_close_enabled | | Set to true to enable fail close
 east_west_inspection_excluded_cidrs | | Network List Excluded From East-West Inspection.
+bgp_cidrs | | CIDRs for BGP over LAN VPCs. If the GW and HAGW need to be in separate VPCs, then specify both CIDRs like 10.0.0.0/28~10.0.0.16/28.
+bgp_names | | Names of BGP over LAN VPCs. If the GW and HAGW need to be in separate VPCs, then specify both names like vpc-a~vpc-b. This list must correspond exactly with variable bgp_cidrs. This is required for using existing VPCs.
+bgp_use_existing_vpcs | | Use existing VPCs for BGP over LAN?
+transit_use_existing_vpcs | | Use existing VPC for Transit Gateway
+bgp_asn | | BGP ASN for Transit Gateway
+deploy_firenet | | Set to false to deploy Transit only.
+transit_vpc_name | | Name of the Transit VPC. If not specified, the name will be generated automatically.
 
 ### Outputs
 This module will return the following objects:

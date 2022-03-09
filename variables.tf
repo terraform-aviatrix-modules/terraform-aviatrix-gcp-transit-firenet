@@ -219,7 +219,7 @@ variable "bgp_asn" {
 }
 
 variable "deploy_firenet" {
-  description = "Set to false to fully deploy the Transit Firenet, but without the actual NGFW instances."
+  description = "Set to false to deploy Transit only."
   type        = bool
   default     = true
 }
