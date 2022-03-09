@@ -6,6 +6,7 @@ In the default state, this module deploys 4 VPCs (Transit Firenet, Management, E
 ### Compatibility
 Module version | Terraform version | Controller version | Terraform provider version
 :--- | :--- | :--- | :---
+v1.1.1 | >=1.0 | >=6.6.5404 | 2.21.1-6.6.ga
 v1.1.0 | >=1.0 | >=6.6.5404 | 2.21.1-6.6.ga
 v1.0.0 | 0.12 - 1.0 | >=6.5 | >=0.2.20
 
