@@ -107,7 +107,7 @@ resource "aviatrix_vpc" "bgp_ha_vpc" {
 # Aviatrix Transit GW
 resource "aviatrix_transit_gateway" "default" {
   gw_name                          = local.name
-  vpc_id                           = local.transit_vpc_name
+  vpc_id                           = local.transit_vpc_id
   cloud_type                       = 4
   vpc_reg                          = local.region1
   gw_size                          = local.hpe ? var.insane_instance_size : var.instance_size

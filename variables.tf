@@ -242,8 +242,11 @@ locals {
   firewall_image         = var.deploy_firenet ? element(split("~", var.firewall_image), 0) : null
   firewall_image_version = var.deploy_firenet ? element(split("~", var.firewall_image), 1) : null
   transit_vpc_name       = var.transit_vpc_name != "" ? var.transit_vpc_name : local.name
-  bgp_cidrs              = [for cidr in var.bgp_cidrs : length(split("~", cidr)) == 1 ? "${cidr}~${cidr}" : cidr] #Double up to simplfy logic.
-  bgp_names              = [for name in var.bgp_names : length(split("~", name)) == 1 ? "${name}~${name}" : name] #Double up to simplfy logic.
-  bgp_vpcs               = var.bgp_names != null ? zipmap([for name in var.bgp_names : element(split("~", name), 0)], [for cidr in var.bgp_cidrs : element(split("~", cidr), 0)]) : zipmap([for cidr in var.bgp_cidrs : "bgp-${index(var.bgp_cidrs, cidr) + 1}"], [for cidr in var.bgp_cidrs : element(split("~", cidr), 0)])
-  ha_bgp_vpcs            = var.bgp_names != null ? zipmap([for name in var.bgp_names : element(split("~", name), 1)], [for cidr in var.bgp_cidrs : element(split("~", cidr), 1)]) : zipmap([for cidr in var.bgp_cidrs : "bgp-${index(var.bgp_cidrs, cidr) + 1}"], [for cidr in var.bgp_cidrs : element(split("~", cidr), 1)])
+  transit_vpc_id         = try(aviatrix_vpc.default[0].name, local.transit_vpc_name)
+  new_bgp_names          = var.bgp_cidrs != null && var.bgp_names == null ? [for cidr in var.bgp_cidrs : length(split("~", cidr)) == 1 ? "bgp-${index(var.bgp_cidrs, cidr) + 1}~bgpha-${index(var.bgp_cidrs, cidr) + 1}" : "bgp-${index(var.bgp_cidrs, cidr) + 1}~bgp-${index(var.bgp_cidrs, cidr) + 1}"] : null
+  existing_bgp_names     = var.bgp_cidrs != null && var.bgp_names != null ? [for name in var.bgp_names : length(split("~", name)) == 1 ? "${name}~${name}" : name] : null
+  bgp_cidrs              = var.bgp_cidrs != null ? [for cidr in var.bgp_cidrs : length(split("~", cidr)) == 1 ? "${cidr}~${cidr}" : cidr] : []
+  bgp_names              = local.new_bgp_names != null ? local.new_bgp_names : local.existing_bgp_names != null ? local.existing_bgp_names : null
+  bgp_vpcs               = local.bgp_cidrs != [] ? local.bgp_names != null ? zipmap([for name in local.bgp_names : element(split("~", name), 0)], [for cidr in local.bgp_cidrs : element(split("~", cidr), 0)]) : {} : {}
+  ha_bgp_vpcs            = local.bgp_cidrs != [] ? local.bgp_names != null ? zipmap([for name in local.bgp_names : element(split("~", name), 1)], [for cidr in local.bgp_cidrs : element(split("~", cidr), 1)]) : {} : {}
 }
