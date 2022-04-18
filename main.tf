@@ -207,7 +207,7 @@ resource "aviatrix_firenet" "firenet" {
   count                                = var.deploy_firenet ? 1 : 0
   vpc_id                               = format("%s~-~%s", aviatrix_transit_gateway.default.vpc_id, data.aviatrix_account.account_id.gcloud_project_id)
   inspection_enabled                   = var.inspection_enabled
-  egress_enabled                       = false
+  egress_enabled                       = var.egress_enabled
   manage_firewall_instance_association = false
   east_west_inspection_excluded_cidrs  = var.east_west_inspection_excluded_cidrs
   depends_on                           = [aviatrix_firewall_instance_association.firenet_instance, aviatrix_firewall_instance_association.firenet_instance1, aviatrix_firewall_instance_association.firenet_instance2]
